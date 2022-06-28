@@ -1,0 +1,217 @@
+---
+title: 'Hexagonal architecture'
+date: '2021-11-01'
+tags: ['java', 'architecture']
+draft: false
+summary: 'An introduction to hexagonal architecture with code examples'
+image: '/static/images/article-images/java-records.jpg'
+---
+
+In the evolution of software architecture, [loose coupling](https://en.wikipedia.org/wiki/Loose_coupling) has been at the centre. There is an emphasis on breaking applications into components which can be switched, replaced or updated without affecting the dependent components.
+
+Hexagonal architecture is another advancement in loosely coupled architectures. It originated around the beginning of the shift to domain-driven designs and formed a basis of further advancements in the field of software design.
+
+## Intoduction
+
+A hexagonal architecture is divided into three parts and defines the strict roles that these parts play within the application.
+
+![Hexagonal architecture layers - User Interfaces, Business Logic and Data sources](https://raw.githubusercontent.com/abh1navv/learning-notes/master/microservices/images/hexagonal-intro.jpg)
+
+**User Interfaces**
+
+There can be many user interfaces to a backend - mobile apps, web apps, desktop softwares, etc. They will all get their resources from the Business logic layer.
+
+**Business Logic**
+
+It forms the core of the application. It's objective is to cater to the requests of user interfaces. Based on the request, it runs some custom logic, gets the resources needed to fulfil the request and answers back in an agreed upon response format.
+
+Below is a small word cloud of the responsibilities of a business logic layer. The responsibilities can vary from one use case to another.
+
+![Components of Business Logic layer](https://raw.githubusercontent.com/abh1navv/learning-notes/master/microservices/images/business-logic-components.png)
+
+**Backing services**
+
+These are services which support the business logic. They each serve a specific purpose and provide data/services to the application. They interact with the business logic layer and are replaceable as long as the communication contract between the two layers is maintained. A few examples:
+
+1. Data sources
+2. Cache aside servers like Redis
+3. Notification services
+4. Another service like a payment gateway
+5. In microservices context, another microservice.
+
+### Intent and principles
+
+The intent is to make the core of our application immune to changes in the communication with other layers. Those concerns are to be handled at the boundary of our hexagon.
+
+**Ports**
+
+Ports are what our core application interacts with. Ports stay consistent for the inner application no matter what happens outside them. They are _interfaces_ that the inner components interact with without knowing whats being plugged into them.
+
+**Adapters**
+
+Ports are staying consistent but we still want to be able to plug multiple applications to them when needed. These applications could have different needs and may not comply with the interface defined by the ports. This is where out adapters come in. Their purpose is to convert the data provided by the outer applications into a format digestible for the inner application.
+
+**Note** - Hexagonal is just a term that has stuck with the architecture for simplicity. It is not to be misunderstood as the business logic layer having 6 ports. There can be many more sides to the polygon as per the services required to connect
+
+![Ports and adapters](https://raw.githubusercontent.com/abh1navv/learning-notes/master/microservices/images/ports-and-adapters.jpg)
+
+## Example
+
+With respect to the above diagram, imagine a small application - a REST API which deals with user related operations.
+
+**Frontend Port** - the requests can come from a website or an app. They may have different parameters and may expect a different response formats. We create an adapter for each frontend actor.
+
+- It receives the request
+- converts it into a consistent format defined by the port
+- passes it onto the inner application.
+
+When the request reaches the inner application, it is consistent with the interface exposed by the port. The application works on it and returns the response in a format that the port expects.
+
+- The port forwards the response to the adapter it received the request from.
+- The adapter converts the response into a format suitable for the requesting party.
+
+**Database port** - the inner application needs to get some data from the database to fulfil the request. Once again, it interacts through a consistent port. And we are able to plug in whichever database we need into that port. The actual DB to be used will be decided at runtime or through configurations.
+
+Let's see a use case of the Database port through code.
+
+### Let's see some code
+
+**Design Intention** - We want to start with a MySQL database but we are not sure if a different database would be necessary in future. Our code should allow for easy swapping of databases when needed.
+
+**The port (Interface)**
+
+We provide an interface for our core to interact with. The interface performs crud operations.
+
+```java
+public interface UserRepository {
+    void save(User o);
+    void delete(User o);
+    void update(User o);
+    User find(int id);
+}
+```
+
+**Adapter**
+
+MySQL Database adapter
+
+```java
+public class MySqlDatabaseRepository implements UserRepository {
+    @Override
+    public void save(User User) {
+        System.out.println("Saving to database");
+    }
+
+    @Override
+    public void delete(User User) {
+        System.out.println("Deleting from database");
+    }
+
+    @Override
+    public void update(User User) {
+        System.out.println("Updating database");
+    }
+
+    @Override
+    public User find(int id) {
+        System.out.println("Finding in database");
+        return null;
+    }
+}
+```
+
+**Interacting with the databases**
+
+As we already know, all communication happens using the interfaces. Our core application will not look beyond the `UserRepository` interface.
+
+Let's look at one of our core services. The below class is concerned with getting the user details - either basic or full.
+
+```java
+public class UserDetailsClient {
+
+    private UserRepository userRepository;
+
+    public UserDetailsServiceImpl(UserRepository userRepository) {
+        this.userRepository = userRepository;
+    }
+
+    public BasicDetails getBasicDetails(int id) {
+        User user = userRepository.find(id);
+        return new BasicDetails(user.getName(), user.getEmail());
+    }
+
+    public FullDetails getFullDetails(int id) {
+        User user = userRepository.find(id);
+        return new FullDetails(user.getName(), user.getEmail(), user.getAddress());
+    }
+
+}
+```
+
+Look how it uses an object of the interface and does not care about which specific database works in the background.
+
+Still, we will need to pass into the service the actual implementation. There are a large number of ways to do that - especially with modern frameworks.
+
+What I have used here is [constructor dependency injection](https://www.tutorialsteacher.com/ioc/dependency-injection) which will hold true for most object-oriented programming languages which use interfaces. Other patterns could be Factory and Strategy patterns.
+
+In my case, the outer layer which tries to get User details will initialize `UserDetailsClient` by passing the required adapter. For e.g.
+
+```java
+UserDetailsClient userDetailsClient = new UserDetailsClient(new MySqlDatabaseRepository());
+userDetailsClient.getBasicDetails(userId);
+```
+
+**Swapping databases**
+
+After a while, it was agreed that having a NoSQL database made things easier due to scalability reasons. What was needed in this case was to introduce another adapter for MongoDb database and make it implement the functionalities defined by the port.
+
+MongoDB adapter
+
+```java
+public class MongoDbRepository implements UserRepository {
+    @Override
+    public void save(User User) {
+        System.out.println("Saving User to mongoDb");
+    }
+
+    @Override
+    public void delete(User id) {
+        System.out.println("Deleting User from mongoDb");
+    }
+
+    @Override
+    public void update(User User) {
+        System.out.println("Updating User in mongoDb");
+    }
+
+    @Override
+    public User find(int id) {
+        System.out.println("Finding User in mongoDb");
+        return null;
+    }
+}
+
+```
+
+To use the MongoDb database, the only change required is in the way the `UserDetailsClient` is initialized. Our calling code changes in the below way:
+
+```java
+UserDetailsClient userDetailsClient = new UserDetailsClient(new MongoDbRepository());
+userDetailsClient.getBasicDetails(userId);
+```
+
+### Advantages
+
+1. **Swappable components** - as we can see in the database layer. There could also be other services in the same pattern. For e.g. I could have notification services and swap between emails and SMS whenever needed.
+2. **Separation of business logic** - If implemented well, the hexagonal architecture does not pose a threat to the business rules at the core of the application when outer layers change.
+3. **Easier testing across ports** - Testing of the core application can be performed around the ports. If needed, mock resources can be introduced using adapters of their own to make unit testing without databases easier.
+
+Although hexagonal architecture is not something that is explicitely thought about when designing the architecture of the application, it is often accidentally used throughout modern applications - especially the Java world which revolves around [dependency injection](https://www.freecodecamp.org/news/a-quick-intro-to-dependency-injection-what-it-is-and-when-to-use-it-7578c84fa88f/) and coding to interfaces rather than implementations.
+
+Nowadays, there is a lot of emphasis on configurability and adaptability of applications. It is important to keep the "ports and adapter pattern" in mind in the low-level design process more than the high-level design.
+
+---
+
+Thank you for reading. Hope you enjoyed the article. Please leave any appreciation and suggestions in the comments. If you want to connect with me, you can find me on [Twitter](https://twitter.com/abh1navv)
+
+**Fun Fact**: The code samples are created by Github Co-pilot with little manual intervention.

@@ -1,0 +1,93 @@
+---
+title: 'Understanding Domain Driven Design with some Pizza'
+date: '2021-10-10'
+tags: ['microservices', 'architecture']
+draft: false
+summary: 'An introduction to domain driven design'
+image: '/static/images/article-images/java-records.jpg'
+---
+
+Its been a while since microservices appeared as an attempt to answer challenges we face in modern application development. At the core, the microservices architecture is created around the principles of domain-driven design.
+
+Let's understand what domain-driven design is and the guidelines it provides for software development.
+
+![](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/b09winy1kwyg6qsytw7g.png)
+
+## Domain driven design (DDD)
+
+Domain driven design is the philosophy behind microservices. It does not provide practical ways to implement software architecture but focuses on a few guiding principles which can help in building maintainable software. We will take the real world example of a pizza shop to understand these concepts.
+
+Let's look at a few terms.
+
+**Domain**
+
+In simple terms, it is a subject around which our application is built. Every component in the application was chosen, programmed and deployed keeping in mind the needs of the domain.
+
+The domain in our shop is the pizza and everything needs to be built around it. The chefs, the ingredients, the menu, the advertising boards, etc.
+
+**Context**
+
+The setting around the domain. In our case, the shop becomes our context. Everything that is required to fulfil the needs related to the domain is encapsulated by the context.
+
+**Model**
+
+Building blocks of the domain. The different parts which combine to solve a problem. In our case, the people in their different roles, the ingredients, the pizza, the furniture, the machines, etc. become our models.
+
+**Ubiquitous Language**
+
+The language and terminology that is used while talking about anything that comes under the context.
+
+**Bounded Context**
+
+A subsystem or a division of responsibility. Every employee in the shop will have their own set of responsibilities. It is unlikely that the chef and the cashier switch roles from time to time and need to know in depth about each other's work.
+
+So now that we have the terminology in place, let's take a look at the principles.
+
+### Principles of DDD
+
+**Model the software around the business domain**
+
+The business domain forms the basis of all architectural decisions. The business models and the software components should be mapped to each other. Whether a term is spoken by a developer or a business executive, it means the same. The final software is a reflection of how the business operates.
+
+In our shop, if the owner of the shop uses the terms small, medium and large, it is recommended that the cashier also uses the same terms instead of describing pizza size in inches. It makes the conversations easier to understand for both parties.
+
+**Software evolves within a bounded context**
+
+A bounded context describes a boundary within which the subsystem needs to evolve and think. It should not be worried about how other bounded contexts change and not try to solve problems for them.
+
+Pizza delivery can evolve without needing the consent of the chefs. Similarly, the delivery person does not dictate what ingredients need to be used in the kitchen. They take care of their own problems and make improvements to their work independently.
+
+One subdomain does not corrupt the functioning of the other.
+
+**Build domains by prioritizing opinions of domain experts**
+
+The development team does not need to be ignorant of the needs of the business. They should understand the requirements from the business perspective first before thinking about the technical domain.
+
+Domain experts have the responsibility of refining the requirements. They capture requirements of a domain and are a point of contact to resolve any ambiguities. Domain experts do not necessarily have to be non-technical. They can be anyone who has studied the domain closely and has experience in working with it.
+
+When our shop needs an advertising board, the owner goes to marketing specialists and designers and does not decide the design of the banner himself. Nor does he let the actual banner maker take that decision.
+
+### Benefits of DDD
+
+Let's look at the benefits of following domain-driven design
+
+1. Easier communication - because domain experts are guiding all conversations
+2. Flexibility - for each component to evolve independently
+3. Reduced misunderstanding - due to use of consistent language and terms.
+4. Better team co-ordination - due to narrowed focus areas
+5. Cleaner architecture - because the separation of concern reduces the risk of software components getting bloated.
+
+### When not to practice DDD?
+
+DDD is not a silver bullet to solve all problems. It can often be overkill to practice it religiously. Some situations when you should 'doublethink' before using it:
+
+1. The software is not expected to grow rapidly
+2. The initial cost needs to be kept low
+3. When the time to deliver is a concern
+
+---
+
+Thanks for reading. I hope the article was useful to help you get an insight into Domain driven design.
+
+You can find more about me [here](https://bio.link/abh1navv)
+Connect with me on [Twitter](twitter.com/abh1navv) for more content.
